@@ -30,16 +30,67 @@
 
 import UIKit
 
+typealias AlbumData = (title: String, value: String)
+
 final class ViewController: UIViewController {
+  
+  enum Constants {
+    static let CellIdentifier = "Cell"
+  }
 
   @IBOutlet var tableView: UITableView!
   @IBOutlet var undoBarButtonItem: UIBarButtonItem!
   @IBOutlet var trashBarButtonItem: UIBarButtonItem!
   
+  private var currentAlbumIndex = 0
+  private var albums = [Album]()
+  var currentAlbumData: [AlbumData]?
+  
   override func viewDidLoad() {
     super.viewDidLoad()
-    // Do any additional setup after loading the view, typically from a nib.
+    
+    albums = LibraryAPI.shared.getAlbums()
+    tableView.dataSource = self
+    showDataForAlbum(at: currentAlbumIndex)
   }
+  
+  private func showDataForAlbum(at index: Int) {
+    if index >= 0 && index < albums.count {
+      currentAlbumData = albums[index].tableAlbumRepresentation
+    } else {
+      currentAlbumData = nil
+    }
+    tableView.reloadData()
+  }
+}
 
+extension ViewController: UITableViewDataSource {
+  public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    guard let albumData = currentAlbumData else {
+      return 0
+    }
+    return albumData.count
+  }
+  
+  public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    let cell = tableView.dequeueReusableCell(withIdentifier: Constants.CellIdentifier, for: indexPath)
+    if let albumData = currentAlbumData {
+      let row = indexPath.row
+      cell.textLabel!.text = albumData[row].title
+      cell.detailTextLabel!.text = albumData[row].value
+    }
+    return cell
+  }
+}
+
+extension Album {
+  var tableAlbumRepresentation: [AlbumData] {
+    return [
+      ("Artist", artist),
+      ("Album", title),
+      ("Genre", genre),
+      ("Year", year)
+    ]
+  }
 }
 
